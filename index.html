@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Typing Speed Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        .char-correct {
+            color: #16a34a;
+        }
+        .char-incorrect {
+            color: #dc2626;
+            background-color: #fee2e2;
+        }
+        .char-pending {
+            color: #9ca3af;
+        }
+        .level-btn {
+            transition: all 0.3s ease;
+        }
+        .level-btn.active {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div class="flex items-center justify-center p-4 min-h-screen">
+        <div class="max-w-4xl w-full bg-white rounded-2xl shadow-2xl p-8">
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-bold text-gray-800 mb-2">⌨️ Typing Speed Test</h1>
+                <p class="text-gray-600">Test your typing speed and accuracy</p>
+            </div>
+
+            <!-- Difficulty Selection -->
+            <div class="mb-8">
+                <h2 class="text-center text-lg font-semibold text-gray-700 mb-4">Select Difficulty Level</h2>
+                <div class="grid grid-cols-3 gap-4">
+                    <button onclick="setLevel('easy')" id="easyBtn" class="level-btn active bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl">
+                        🟢 Easy<br><span class="text-sm font-normal">30 seconds</span>
+                    </button>
+                    <button onclick="setLevel('medium')" id="mediumBtn" class="level-btn bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-xl">
+                        🟡 Medium<br><span class="text-sm font-normal">60 seconds</span>
+                    </button>
+                    <button onclick="setLevel('hard')" id="hardBtn" class="level-btn bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-xl">
+                        🔴 Hard<br><span class="text-sm font-normal">90 seconds</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4 mb-8">
+                <div class="bg-blue-50 rounded-xl p-4 text-center">
+                    <div class="flex items-center justify-center mb-2">
+                        <span class="text-sm font-semibold text-gray-600">⏱️ Time</span>
+                    </div>
+                    <div id="timer" class="text-3xl font-bold text-blue-600">30s</div>
+                </div>
+
+                <div class="bg-green-50 rounded-xl p-4 text-center">
+                    <div class="flex items-center justify-center mb-2">
+                        <span class="text-sm font-semibold text-gray-600">⚡ WPM</span>
+                    </div>
+                    <div id="wpm" class="text-3xl font-bold text-green-600">0</div>
+                </div>
+
+                <div class="bg-purple-50 rounded-xl p-4 text-center">
+                    <div class="flex items-center justify-center mb-2">
+                        <span class="text-sm font-semibold text-gray-600">🏆 Accuracy</span>
+                    </div>
+                    <div id="accuracy" class="text-3xl font-bold text-purple-600">100%</div>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 rounded-xl p-6 mb-6 border-2 border-gray-200">
+                <div id="textDisplay" class="text-2xl leading-relaxed font-mono select-none"></div>
+            </div>
+
+            <textarea
+                id="userInput"
+                placeholder="Start typing here..."
+                class="w-full h-32 p-4 text-lg border-2 border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 resize-none font-mono"
+            ></textarea>
+
+            <div class="mt-6 flex justify-center">
+                <button
+                    id="resetBtn"
+                    onclick="initTest()"
+                    class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3 rounded-xl transition-colors shadow-lg"
+                >
+                    🔄 New Test
+                </button>
+            </div>
+
+            <div id="results" class="mt-8 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-6 border-2 border-green-200 hidden">
+                <h2 class="text-2xl font-bold text-center text-gray-800 mb-4">🎉 Test Complete!</h2>
+                <div class="text-center mb-4">
+                    <span id="levelBadge" class="inline-block bg-green-500 text-white px-4 py-2 rounded-full font-semibold">🟢 Easy Level</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="text-center">
+                        <p class="text-gray-600 mb-1">Final Speed</p>
+                        <p id="finalWpm" class="text-3xl font-bold text-green-600">0 WPM</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-gray-600 mb-1">Final Accuracy</p>
+                        <p id="finalAccuracy" class="text-3xl font-bold text-purple-600">100%</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 pt-4 border-t-2 border-gray-200">
+                    <div class="text-center">
+                        <p class="text-gray-600 mb-1">✅ Correct Words</p>
+                        <p id="correctWords" class="text-2xl font-bold text-green-600">0</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-gray-600 mb-1">❌ Wrong Words</p>
+                        <p id="wrongWords" class="text-2xl font-bold text-red-600">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 text-center text-sm text-gray-500">
+                <p>Type the text above as quickly and accurately as possible.</p>
+                <p id="levelInfo">Easy: 30 seconds | Medium: 60 seconds | Hard: 90 seconds</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const textsByLevel = {
+            easy: [
+                "The cat sits on the mat and sleeps.",
+                "I like to eat pizza for dinner.",
+                "The sun is bright and warm today.",
+                "Dogs are very loyal and friendly pets.",
+                "She runs fast in the park daily."
+            ],
+            medium: [
+                "The quick brown fox jumps over the lazy dog near the riverbank.",
+                "Practice makes perfect when you type with focus and determination every single day.",
+                "Technology has transformed the way we communicate and work in modern society.",
+                "Learning to type faster improves productivity and saves valuable time each day.",
+                "Coffee shops are popular places where people work and socialize together happily."
+            ],
+            hard: [
+                "In the realm of quantum mechanics, particles exhibit both wave-like and particle-like properties simultaneously, challenging our classical understanding of physics.",
+                "Artificial intelligence and machine learning algorithms are revolutionizing industries by enabling computers to learn from data and make intelligent decisions autonomously.",
+                "The biodiversity of tropical rainforests encompasses millions of species, many of which remain undiscovered by modern science and taxonomy.",
+                "Cryptocurrency blockchain technology utilizes cryptographic principles to create decentralized, immutable ledgers for transparent financial transactions.",
+                "Neuroplasticity demonstrates the brain's remarkable ability to reorganize itself by forming new neural connections throughout life in response to learning and experience."
+            ]
+        };
+
+        const levelSettings = {
+            easy: { time: 30, color: 'green', emoji: '🟢', name: 'Easy' },
+            medium: { time: 60, color: 'yellow', emoji: '🟡', name: 'Medium' },
+            hard: { time: 90, color: 'red', emoji: '🔴', name: 'Hard' }
+        };
+
+        let currentLevel = 'easy';
+        let currentText = '';
+        let startTime = null;
+        let isActive = false;
+        let timeLeft = 30;
+        let maxTime = 30;
+        let timerInterval = null;
+        let wpm = 0;
+        let accuracy = 100;
+        let correctWordsCount = 0;
+        let wrongWordsCount = 0;
+
+        const textDisplay = document.getElementById('textDisplay');
+        const userInput = document.getElementById('userInput');
+        const timerEl = document.getElementById('timer');
+        const wpmEl = document.getElementById('wpm');
+        const accuracyEl = document.getElementById('accuracy');
+        const resultsDiv = document.getElementById('results');
+        const finalWpmEl = document.getElementById('finalWpm');
+        const finalAccuracyEl = document.getElementById('finalAccuracy');
+        const correctWordsEl = document.getElementById('correctWords');
+        const wrongWordsEl = document.getElementById('wrongWords');
+        const levelBadge = document.getElementById('levelBadge');
+
+        function setLevel(level) {
+            currentLevel = level;
+            
+            // Update button styles
+            document.getElementById('easyBtn').classList.remove('active');
+            document.getElementById('mediumBtn').classList.remove('active');
+            document.getElementById('hardBtn').classList.remove('active');
+            document.getElementById(level + 'Btn').classList.add('active');
+            
+            initTest();
+        }
+
+        function initTest() {
+            const settings = levelSettings[currentLevel];
+            maxTime = settings.time;
+            timeLeft = maxTime;
+            
+            const texts = textsByLevel[currentLevel];
+            currentText = texts[Math.floor(Math.random() * texts.length)];
+            
+            userInput.value = '';
+            userInput.disabled = false;
+            startTime = null;
+            isActive = false;
+            wpm = 0;
+            accuracy = 100;
+            correctWordsCount = 0;
+            wrongWordsCount = 0;
+            
+            timerEl.textContent = timeLeft + 's';
+            wpmEl.textContent = '0';
+            accuracyEl.textContent = '100%';
+            resultsDiv.classList.add('hidden');
+            
+            renderText();
+            userInput.focus();
+            
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function renderText() {
+            const input = userInput.value;
+            let html = '';
+            
+            for (let i = 0; i < currentText.length; i++) {
+                const char = currentText[i];
+                let className = 'char-pending';
+                
+                if (i < input.length) {
+                    className = input[i] === char ? 'char-correct' : 'char-incorrect';
+                }
+                
+                html += `<span class="${className}">${char}</span>`;
+            }
+            
+            textDisplay.innerHTML = html;
+        }
+
+        function startTimer() {
+            isActive = true;
+            startTime = Date.now();
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerEl.textContent = timeLeft + 's';
+                
+                if (timeLeft <= 0) {
+                    finishTest();
+                }
+            }, 1000);
+        }
+
+        function calculateStats() {
+            const input = userInput.value;
+            if (!input) return;
+
+            const words = input.trim().split(/\s+/).length;
+            const timeElapsed = (maxTime - timeLeft) || 1;
+            wpm = Math.round((words / timeElapsed) * 60);
+            wpmEl.textContent = wpm;
+
+            let correct = 0;
+            for (let i = 0; i < input.length; i++) {
+                if (input[i] === currentText[i]) correct++;
+            }
+            
+            accuracy = input.length > 0 ? Math.round((correct / input.length) * 100) : 100;
+            accuracyEl.textContent = accuracy + '%';
+        }
+
+        function calculateWordAccuracy() {
+            const input = userInput.value.trim();
+            const originalWords = currentText.trim().split(/\s+/);
+            const typedWords = input.split(/\s+/);
+            
+            correctWordsCount = 0;
+            wrongWordsCount = 0;
+            
+            for (let i = 0; i < typedWords.length; i++) {
+                if (i < originalWords.length) {
+                    if (typedWords[i] === originalWords[i]) {
+                        correctWordsCount++;
+                    } else {
+                        wrongWordsCount++;
+                    }
+                } else {
+                    wrongWordsCount++;
+                }
+            }
+        }
+
+        function finishTest() {
+            isActive = false;
+            userInput.disabled = true;
+            
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            
+            calculateWordAccuracy();
+            
+            const settings = levelSettings[currentLevel];
+            levelBadge.textContent = `${settings.emoji} ${settings.name} Level`;
+            levelBadge.className = `inline-block bg-${settings.color}-500 text-white px-4 py-2 rounded-full font-semibold`;
+            
+            finalWpmEl.textContent = wpm + ' WPM';
+            finalAccuracyEl.textContent = accuracy + '%';
+            correctWordsEl.textContent = correctWordsCount;
+            wrongWordsEl.textContent = wrongWordsCount;
+            resultsDiv.classList.remove('hidden');
+        }
+
+        userInput.addEventListener('input', (e) => {
+            if (!isActive && e.target.value.length > 0) {
+                startTimer();
+            }
+            
+            renderText();
+            calculateStats();
+            
+            if (e.target.value === currentText) {
+                finishTest();
+            }
+        });
+
+        // Initialize on load
+        initTest();
+    </script>
+</body>
+</html>
